@@ -1,6 +1,6 @@
 package mx.unam.aragon.tsp.vmartinez.pizzas.controllers;
 
-import mx.unam.aragon.tsp.vmartinez.pizzas.models.Pizza;
+import mx.unam.aragon.tsp.vmartinez.pizzas.models.Cliente;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -10,47 +10,41 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/pizzas")
-public class PizzaController {
+@RequestMapping("/api/v1/clientes")
+public class ClienteController {
 
-    // Almacenamiento en memoria (se pierde al apagar la app)
-    private final Map<Integer, Pizza> datos = new ConcurrentSkipListMap<>();
+    private final Map<Integer, Cliente> datos = new ConcurrentSkipListMap<>();
     private final AtomicInteger contador = new AtomicInteger();
 
-    // READ (todos)
     @GetMapping
-    public Collection<Pizza> listar() {
+    public Collection<Cliente> listar() {
         return datos.values();
     }
 
-    // READ (uno)
     @GetMapping("/{id}")
-    public ResponseEntity<Pizza> obtener(@PathVariable("id") int id) {
-        Pizza item = datos.get(id);
+    public ResponseEntity<Cliente> obtener(@PathVariable("id") int id) {
+        Cliente item = datos.get(id);
         return item == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(item);
     }
 
-    // CREATE
     @PostMapping
-    public ResponseEntity<Pizza> crear(@RequestBody Pizza nueva) {
+    public ResponseEntity<Cliente> crear(@RequestBody Cliente nueva) {
         int id = contador.incrementAndGet();
-        Pizza item = new Pizza(id, nueva.nombre(), nueva.descripcion(), nueva.precio());
+        Cliente item = new Cliente(id, nueva.nombre(), nueva.telefono(), nueva.direccion());
         datos.put(id, item);
         return ResponseEntity.status(HttpStatus.CREATED).body(item);
     }
 
-    // UPDATE
     @PutMapping("/{id}")
-    public ResponseEntity<Pizza> actualizar(@PathVariable("id") int id, @RequestBody Pizza cambios) {
+    public ResponseEntity<Cliente> actualizar(@PathVariable("id") int id, @RequestBody Cliente cambios) {
         if (!datos.containsKey(id)) {
             return ResponseEntity.notFound().build();
         }
-        Pizza item = new Pizza(id, cambios.nombre(), cambios.descripcion(), cambios.precio());
+        Cliente item = new Cliente(id, cambios.nombre(), cambios.telefono(), cambios.direccion());
         datos.put(id, item);
         return ResponseEntity.ok(item);
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable("id") int id) {
         return datos.remove(id) == null ? ResponseEntity.notFound().build() : ResponseEntity.noContent().build();

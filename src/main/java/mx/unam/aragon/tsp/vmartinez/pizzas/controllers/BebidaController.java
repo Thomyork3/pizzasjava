@@ -1,6 +1,6 @@
 package mx.unam.aragon.tsp.vmartinez.pizzas.controllers;
 
-import mx.unam.aragon.tsp.vmartinez.pizzas.models.Pizza;
+import mx.unam.aragon.tsp.vmartinez.pizzas.models.Bebida;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -10,47 +10,41 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/pizzas")
-public class PizzaController {
+@RequestMapping("/api/v1/bebidas")
+public class BebidaController {
 
-    // Almacenamiento en memoria (se pierde al apagar la app)
-    private final Map<Integer, Pizza> datos = new ConcurrentSkipListMap<>();
+    private final Map<Integer, Bebida> datos = new ConcurrentSkipListMap<>();
     private final AtomicInteger contador = new AtomicInteger();
 
-    // READ (todos)
     @GetMapping
-    public Collection<Pizza> listar() {
+    public Collection<Bebida> listar() {
         return datos.values();
     }
 
-    // READ (uno)
     @GetMapping("/{id}")
-    public ResponseEntity<Pizza> obtener(@PathVariable("id") int id) {
-        Pizza item = datos.get(id);
+    public ResponseEntity<Bebida> obtener(@PathVariable("id") int id) {
+        Bebida item = datos.get(id);
         return item == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(item);
     }
 
-    // CREATE
     @PostMapping
-    public ResponseEntity<Pizza> crear(@RequestBody Pizza nueva) {
+    public ResponseEntity<Bebida> crear(@RequestBody Bebida nueva) {
         int id = contador.incrementAndGet();
-        Pizza item = new Pizza(id, nueva.nombre(), nueva.descripcion(), nueva.precio());
+        Bebida item = new Bebida(id, nueva.nombre(), nueva.mililitros(), nueva.precio());
         datos.put(id, item);
         return ResponseEntity.status(HttpStatus.CREATED).body(item);
     }
 
-    // UPDATE
     @PutMapping("/{id}")
-    public ResponseEntity<Pizza> actualizar(@PathVariable("id") int id, @RequestBody Pizza cambios) {
+    public ResponseEntity<Bebida> actualizar(@PathVariable("id") int id, @RequestBody Bebida cambios) {
         if (!datos.containsKey(id)) {
             return ResponseEntity.notFound().build();
         }
-        Pizza item = new Pizza(id, cambios.nombre(), cambios.descripcion(), cambios.precio());
+        Bebida item = new Bebida(id, cambios.nombre(), cambios.mililitros(), cambios.precio());
         datos.put(id, item);
         return ResponseEntity.ok(item);
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable("id") int id) {
         return datos.remove(id) == null ? ResponseEntity.notFound().build() : ResponseEntity.noContent().build();
