@@ -1,10 +1,9 @@
 package mx.unam.aragon.tsp.vmartinez.pizzas.controllers;
 
-import mx.unam.aragon.tsp.vmartinez.pizzas.models.Tamano;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import mx.unam.aragon.tsp.vmartinez.pizzas.dtos.TamanoDto;
+import mx.unam.aragon.tsp.vmartinez.pizzas.dtos.TamanoDtoIn;
+import mx.unam.aragon.tsp.vmartinez.pizzas.services.TamanoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,40 +12,38 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/tamanos")
 public class TamanoController {
 
-    private final Map<Integer, Tamano> datos = new ConcurrentSkipListMap<>();
-    private final AtomicInteger contador = new AtomicInteger();
+    private final TamanoService service;
+
+    public TamanoController(TamanoService service) {
+        this.service = service;
+    }
 
     @GetMapping
-    public Collection<Tamano> listar() {
-        return datos.values();
+    public List<TamanoDto> listar() {
+        return service.listar();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tamano> obtener(@PathVariable("id") int id) {
-        Tamano item = datos.get(id);
-        return item == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(item);
+    public ResponseEntity<TamanoDto> obtener(@PathVariable("id") int id) {
+        return service.obtener(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Tamano> crear(@RequestBody Tamano nueva) {
-        int id = contador.incrementAndGet();
-        Tamano item = new Tamano(id, nueva.nombre(), nueva.centimetros());
-        datos.put(id, item);
-        return ResponseEntity.status(HttpStatus.CREATED).body(item);
+    public ResponseEntity<TamanoDto> crear(@RequestBody TamanoDtoIn in) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(in));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Tamano> actualizar(@PathVariable("id") int id, @RequestBody Tamano cambios) {
-        if (!datos.containsKey(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        Tamano item = new Tamano(id, cambios.nombre(), cambios.centimetros());
-        datos.put(id, item);
-        return ResponseEntity.ok(item);
+    public ResponseEntity<TamanoDto> actualizar(@PathVariable("id") int id, @RequestBody TamanoDtoIn in) {
+        return service.actualizar(id, in)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable("id") int id) {
-        return datos.remove(id) == null ? ResponseEntity.notFound().build() : ResponseEntity.noContent().build();
+        return service.eliminar(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }

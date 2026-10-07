@@ -1,10 +1,9 @@
 package mx.unam.aragon.tsp.vmartinez.pizzas.controllers;
 
-import mx.unam.aragon.tsp.vmartinez.pizzas.models.Bebida;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import mx.unam.aragon.tsp.vmartinez.pizzas.dtos.BebidaDto;
+import mx.unam.aragon.tsp.vmartinez.pizzas.dtos.BebidaDtoIn;
+import mx.unam.aragon.tsp.vmartinez.pizzas.services.BebidaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,40 +12,38 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/bebidas")
 public class BebidaController {
 
-    private final Map<Integer, Bebida> datos = new ConcurrentSkipListMap<>();
-    private final AtomicInteger contador = new AtomicInteger();
+    private final BebidaService service;
+
+    public BebidaController(BebidaService service) {
+        this.service = service;
+    }
 
     @GetMapping
-    public Collection<Bebida> listar() {
-        return datos.values();
+    public List<BebidaDto> listar() {
+        return service.listar();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Bebida> obtener(@PathVariable("id") int id) {
-        Bebida item = datos.get(id);
-        return item == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(item);
+    public ResponseEntity<BebidaDto> obtener(@PathVariable("id") int id) {
+        return service.obtener(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Bebida> crear(@RequestBody Bebida nueva) {
-        int id = contador.incrementAndGet();
-        Bebida item = new Bebida(id, nueva.nombre(), nueva.mililitros(), nueva.precio());
-        datos.put(id, item);
-        return ResponseEntity.status(HttpStatus.CREATED).body(item);
+    public ResponseEntity<BebidaDto> crear(@RequestBody BebidaDtoIn in) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(in));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Bebida> actualizar(@PathVariable("id") int id, @RequestBody Bebida cambios) {
-        if (!datos.containsKey(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        Bebida item = new Bebida(id, cambios.nombre(), cambios.mililitros(), cambios.precio());
-        datos.put(id, item);
-        return ResponseEntity.ok(item);
+    public ResponseEntity<BebidaDto> actualizar(@PathVariable("id") int id, @RequestBody BebidaDtoIn in) {
+        return service.actualizar(id, in)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable("id") int id) {
-        return datos.remove(id) == null ? ResponseEntity.notFound().build() : ResponseEntity.noContent().build();
+        return service.eliminar(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
